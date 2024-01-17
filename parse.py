@@ -6,7 +6,9 @@ from typing import List
 from classes import *
 
 
-def parse(file_name: str, full_info: ChampInfo):
+def parse(file_name: str) -> None:
+    full_info = ChampInfo()
+
     filtered_list = parse_pdf(file_name=file_name, full_info=full_info)
 
     assemble_info(filtered_list=filtered_list, full_info=full_info)
@@ -16,8 +18,7 @@ def parse(file_name: str, full_info: ChampInfo):
     to_json(file_name=file_name, full_info=full_info)
 
 
-def assemble_info(filtered_list: List[str], full_info: ChampInfo):
-
+def assemble_info(filtered_list: List[str], full_info: ChampInfo) -> None:
     for ind in range(len(filtered_list)):
         if (ages := regex.header.search(filtered_list[ind])) is not None:
             age = Ages()
@@ -87,7 +88,7 @@ def parse_pdf(file_name: str, full_info: ChampInfo) -> List[str]:
     return filter_list
 
 
-def age_range_filter(full_info: ChampInfo):
+def age_range_filter(full_info: ChampInfo) -> None:
     left = 0
     right = 1
 
@@ -101,7 +102,7 @@ def age_range_filter(full_info: ChampInfo):
             right += 1
 
 
-def to_json(file_name: str, full_info: ChampInfo):
+def to_json(file_name: str, full_info: ChampInfo) -> None:
     json_info = json.dumps(full_info, cls=Encoder, ensure_ascii=False)
     name = file_name.split('.')[0] + '.json'
 
