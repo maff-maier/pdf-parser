@@ -27,7 +27,7 @@ class Person:
 
 class Ages:
     range_name: str
-    ages: List[Person]
+    persons: List[Person]
 
     def __repr__(self) -> str:
         return f'{self.range_name} {self.ages}'
