@@ -28,38 +28,6 @@ def parse(file_name: str) -> None:
     to_json(file_name=file_name, full_info=full_info)
 
 
-def assemble_info(filtered_list: List[str], full_info: ChampInfo) -> None:
-    for ind in range(len(filtered_list)):
-        if (ages := regex.header.search(filtered_list[ind])) is not None:
-            age = Ages()
-            age.range_name = ages.string.strip()
-            age.ages = []
-            ind += 1
-
-            while ind < len(filtered_list) and (name := regex.names.search(filtered_list[ind])) is not None:
-                person = Person()
-
-                person.initials = name.string.strip()
-                person.distanses = []
-
-                ind += 1
-
-                while ind < len(filtered_list) and len(distance := regex.dist_time.findall(filtered_list[ind])):
-                    for mtch in distance:
-                        new_dist = DistanseTime()
-
-                        new_dist.distance = mtch[0]
-                        new_dist.sum_time = mtch[1]
-                        new_dist.time = mtch[2]
-
-                        person.distanses.append(new_dist)
-                    ind += 1
-
-                age.ages.append(person)
-
-            full_info.participants.append(age)
-
-
 def parse_pdf(file_name: str, full_info: ChampInfo) -> List[str]:
     filter_list = []
 
@@ -98,14 +66,46 @@ def parse_pdf(file_name: str, full_info: ChampInfo) -> List[str]:
     return filter_list
 
 
+def assemble_info(filtered_list: List[str], full_info: ChampInfo) -> None:
+    for ind in range(len(filtered_list)):
+        if (ages := regex.header.search(filtered_list[ind])) is not None:
+            age = Ages()
+            age.range_name = ages.string.strip()
+            age.persons = []
+            ind += 1
+
+            while ind < len(filtered_list) and (name := regex.names.search(filtered_list[ind])) is not None:
+                person = Person()
+
+                person.initials = name.string.strip()
+                person.distanses = []
+
+                ind += 1
+
+                while ind < len(filtered_list) and len(distance := regex.dist_time.findall(filtered_list[ind])):
+                    for mtch in distance:
+                        new_dist = DistanseTime()
+
+                        new_dist.distance = mtch[0]
+                        new_dist.sum_time = mtch[1]
+                        new_dist.time = mtch[2]
+
+                        person.distanses.append(new_dist)
+                    ind += 1
+
+                age.persons.append(person)
+
+            full_info.participants.append(age)
+
+
 def age_range_filter(full_info: ChampInfo) -> None:
     left = 0
     right = 1
 
     while left < len(full_info.participants) and right < len(full_info.participants):
         if full_info.participants[left].range_name == full_info.participants[right].range_name:
-            full_info.participants[left].ages.extend(
-                full_info.participants[right].ages)
+            full_info.participants[left].persons.extend(
+                full_info.participants[right].persons)
             full_info.participants.pop(right)
         else:
             left = right
