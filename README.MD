@@ -1,6 +1,6 @@
 ### PDF converter to JSON
 
-You have to download `.pdf file` in root directory and change `file_name` variable's value to your `file name` in `main.py`.
+You have to download `.pdf file` in root directory.
 
 Install venv:
 ```sh
@@ -14,5 +14,5 @@ pip install -r requirements.txt
 
 Run program with:
 ```sh
-py main.py
+py main.py filename.pdf
 ```

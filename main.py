@@ -1,8 +1,8 @@
-from parse import parse
+from parse import parse, get_filename
 
 
 def main() -> None:
-    file_name = 'ResultList_3.pdf'
+    file_name = get_filename()
 
     parse(file_name=file_name)
 

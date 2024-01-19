@@ -1,9 +1,19 @@
 import pdfplumber
 import regex
 import json
+import argparse
 
 from typing import List
 from classes import *
+
+
+def get_filename() -> str:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('filename', type=str)
+    args = parser.parse_args()
+
+    return args.filename
 
 
 def parse(file_name: str) -> None:
