@@ -1,3 +1,4 @@
+from io import BytesIO
 import pdfplumber
 import regex
 import json
@@ -16,22 +17,22 @@ def get_filename() -> str:
     return args.filename
 
 
-def parse(file_name: str) -> None:
+def parse(file: BytesIO, filename: str) -> str:
     full_info = ChampInfo()
 
-    filtered_list = parse_pdf(file_name=file_name, full_info=full_info)
+    filtered_list = parse_pdf(file=file, full_info=full_info)
 
     assemble_info(filtered_list=filtered_list, full_info=full_info)
 
     age_range_filter(full_info=full_info)
 
-    to_json(file_name=file_name, full_info=full_info)
+    return to_json(filename=filename, full_info=full_info)
 
 
-def parse_pdf(file_name: str, full_info: ChampInfo) -> List[str]:
+def parse_pdf(file: BytesIO, full_info: ChampInfo) -> List[str]:
     filter_list = []
 
-    with pdfplumber.open(file_name) as pdf:
+    with pdfplumber.open(file) as pdf:
 
         page = pdf.pages[0]
 
@@ -44,9 +45,7 @@ def parse_pdf(file_name: str, full_info: ChampInfo) -> List[str]:
         full_info.participants = []
 
         for page in pdf.pages:
-            text = page.extract_text()
-
-            text = text.split('\n')
+            text = page.extract_text().split('\n')
 
             for line_index in range(len(text)):
                 mnames = regex.names.search(text[line_index])
@@ -112,9 +111,9 @@ def age_range_filter(full_info: ChampInfo) -> None:
             right += 1
 
 
-def to_json(file_name: str, full_info: ChampInfo) -> None:
-    json_info = json.dumps(full_info, cls=Encoder, ensure_ascii=False)
-    name = file_name.split('.')[0] + '.json'
+def to_json(filename: str, full_info: ChampInfo) -> str:
+    return json.dumps(full_info, cls=Encoder, ensure_ascii=False)
+    # name = filename.split('.')[0] + '.json'
 
-    with open(name, 'w') as f:
-        f.write(json_info)
+    # with open(name, 'w') as f:
+    #     f.write(json_info)

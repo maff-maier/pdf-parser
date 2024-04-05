@@ -14,10 +14,19 @@ pip install -r requirements.txt
 
 Run program with:
 ```sh
-py main.py filename.pdf
+uvicorn main:app --reload
 ```
 
-## JSON structure
+## Request JSON structure
+### Schema
+```json
+{
+    "files": bfile
+}
+```
+
+
+## Response JSON structure
 ### Schema
 ```json
 {
