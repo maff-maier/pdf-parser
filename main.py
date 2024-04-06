@@ -1,6 +1,8 @@
 import io
 from parse import parse, get_filename
 from fastapi import FastAPI, File, UploadFile
+import json
+
 # def main() -> None:
 #     file_name = get_filename()
 
@@ -14,9 +16,7 @@ async def upload_file(files: UploadFile = File(...)):
         file = io.BytesIO(req_file.read())
         filename = files.filename
         
-    return parse(file=file, filename=filename)
-        
-    
+    return json.loads(parse(file=file, filename=filename))
 
 
 # if __name__ == '__main__':
