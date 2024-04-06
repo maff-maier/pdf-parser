@@ -1,7 +1,5 @@
 ### PDF converter to JSON
 
-You have to download `.pdf file` in root directory.
-
 Install venv:
 ```sh
 py -m venv venv
