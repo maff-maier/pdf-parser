@@ -6,6 +6,7 @@ from io import BytesIO
 from fastapi import HTTPException
 from typing import List
 from classes import *
+from utils import distance_validation, min_to_sec_convert
 
 
 def parse(file: BytesIO) -> str:
@@ -15,11 +16,15 @@ def parse(file: BytesIO) -> str:
 
     assemble_info(filtered_list=filtered_list, full_info=full_info)
 
-    min_sec_conver(full_info=full_info)
+    min_to_sec_convert(full_info=full_info)
 
-    if not len(full_info.swimmers):
+    if not distance_validation(info=full_info):
         raise HTTPException(status_code=422, detail={
-                            "Error": "No swimmers in result list. Check file validity."})
+                            "error": "Wrong max distance in file"})
+
+    if not len(full_info.swimmers) or not len(full_info.distance):
+        raise HTTPException(status_code=422, detail={
+                            "error": "No info in result. Check file validity."})
 
     return to_json(full_info=full_info)
 
@@ -96,24 +101,6 @@ def assemble_info(filtered_list: List[str], full_info: ChampInfo) -> None:
                 ind += 1
 
             full_info.swimmers.append(person)
-
-
-def min_sec_conver(full_info: ChampInfo) -> ChampInfo:
-    for person in full_info.swimmers:
-        for distance in person.distances:
-            if ':' in distance.time:
-                distance.time = mins_to_secs(distance.time)
-            if ':' in distance.total:
-                distance.total = mins_to_secs(distance.total)
-
-
-def mins_to_secs(time: str) -> str:
-    mins_time = time.split(':')
-    secs_split = mins_time[1].split('.')
-
-    secs = int(mins_time[0]) * 60 + int(secs_split[0])
-
-    return str(secs) + '.' + secs_split[1]
 
 
 def to_json(full_info: ChampInfo) -> str:
