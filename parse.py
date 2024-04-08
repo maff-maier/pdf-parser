@@ -1,37 +1,30 @@
-from io import BytesIO
 import pdfplumber
 import regex
 import json
-import argparse
 
+from fastapi import HTTPException
 from typing import List
 from classes import *
 
 
-def get_filename() -> str:
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('filename', type=str)
-    args = parser.parse_args()
-
-    return args.filename
-
-
-def parse(file: BytesIO, filename: str) -> str:
+def parse(file: str) -> str:
     full_info = ChampInfo()
 
     filtered_list = parse_pdf(file=file, full_info=full_info)
 
     assemble_info(filtered_list=filtered_list, full_info=full_info)
 
-    age_range_filter(full_info=full_info)
+    min_sec_conver(full_info=full_info)
 
-    return to_json(filename=filename, full_info=full_info)
+    if not len(full_info.swimmers):
+        raise HTTPException(status_code=422, detail={
+                            "Error": "No swimmers in result list. Check file validity."})
+
+    return to_json(full_info=full_info)
 
 
-def parse_pdf(file: BytesIO, full_info: ChampInfo) -> List[str]:
+def parse_pdf(file: str, full_info: ChampInfo) -> List[str]:
     filter_list = []
-
     with pdfplumber.open(file) as pdf:
 
         page = pdf.pages[0]
@@ -39,81 +32,88 @@ def parse_pdf(file: BytesIO, full_info: ChampInfo) -> List[str]:
         text = page.extract_text()
         distnt = regex.dist.findall(text)
 
-        full_info.sex = 'M' if 'Мальчики' in text else 'F'
-        full_info.champ_type = 'Final' if 'Финальный' in text else 'Prepatory'
         full_info.distance = distnt[0]
-        full_info.participants = []
 
         for page in pdf.pages:
             text = page.extract_text().split('\n')
 
             for line_index in range(len(text)):
                 mnames = regex.names.search(text[line_index])
-
-                mheader = regex.header.search(text[line_index])
-
                 if mnames is not None:
                     filter_list.append(mnames.group(2))
-                    line_index += 1
 
+                    if full_info.distance == '50m':
+                        dist_time = regex.dist_50.findall(text[line_index])[0]
+                        filter_list.append(dist_time)
+                        continue
+
+                    line_index += 1
                     while len(regex.dist.findall(text[line_index])):
                         filter_list.append(text[line_index])
                         line_index += 1
-
-                elif mheader is not None:
-                    filter_list.append(mheader.group(1))
     return filter_list
 
 
 def assemble_info(filtered_list: List[str], full_info: ChampInfo) -> None:
-    for ind in range(len(filtered_list)):
-        if (ages := regex.header.search(filtered_list[ind])) is not None:
-            age = Ages()
-            age.range_name = ages.string.strip()
-            age.persons = []
+    if full_info.distance == '50m':
+        skip_50m_next_line_flag = False
+        for ind, line in enumerate(filtered_list):
+            if skip_50m_next_line_flag:
+                skip_50m_next_line_flag = False
+                continue
+
+            person = Person()
+            person.initials = line
+
+            distance = DistanceTime()
+
+            distance.distance = '50m'
+            distance.time = filtered_list[ind + 1]
+            distance.total = filtered_list[ind + 1]
+
+            person.distances.append(distance)
+            full_info.swimmers.append(person)
+
+            skip_50m_next_line_flag = True
+    else:
+        ind = 0
+        while ind < len(filtered_list):
+            person = Person()
+            person.initials = filtered_list[ind]
             ind += 1
 
-            while ind < len(filtered_list) and (name := regex.names.search(filtered_list[ind])) is not None:
-                person = Person()
+            while ind < len(filtered_list) and len(distance := regex.dist_time.findall(filtered_list[ind])):
+                for mtch in distance:
+                    new_dist = DistanceTime()
 
-                person.initials = name.string.strip()
-                person.distanses = []
+                    new_dist.distance = mtch[0]
+                    new_dist.total = mtch[1]
+                    new_dist.time = mtch[2]
+
+                    person.distances.append(new_dist)
 
                 ind += 1
 
-                while ind < len(filtered_list) and len(distance := regex.dist_time.findall(filtered_list[ind])):
-                    for mtch in distance:
-                        new_dist = DistanseTime()
-
-                        new_dist.distance = mtch[0]
-                        new_dist.sum_time = mtch[1]
-                        new_dist.time = mtch[2]
-
-                        person.distanses.append(new_dist)
-                    ind += 1
-
-                age.persons.append(person)
-
-            full_info.participants.append(age)
+            full_info.swimmers.append(person)
 
 
-def age_range_filter(full_info: ChampInfo) -> None:
-    left = 0
-    right = 1
-
-    while left < len(full_info.participants) and right < len(full_info.participants):
-        if full_info.participants[left].range_name == full_info.participants[right].range_name:
-            full_info.participants[left].persons.extend(
-                full_info.participants[right].persons)
-            full_info.participants.pop(right)
-        else:
-            left = right
-            right += 1
+def min_sec_conver(full_info: ChampInfo) -> ChampInfo:
+    for person in full_info.swimmers:
+        for distance in person.distances:
+            if ':' in distance.time:
+                distance.time = mins_to_secs(distance.time)
+            if ':' in distance.total:
+                distance.total = mins_to_secs(distance.total)
 
 
-def to_json(filename: str, full_info: ChampInfo) -> str:
+def mins_to_secs(time: str) -> str:
+    mins_time = time.split(':')
+    secs_split = mins_time[1].split('.')
+
+    secs = int(mins_time[0]) * 60 + int(secs_split[0])
+
+    return str(secs) + '.' + secs_split[1]
+
+
+def to_json(full_info: ChampInfo) -> str:
     return json.dumps(full_info, cls=Encoder, ensure_ascii=False)
-    # name = filename.split('.')[0] + '.json'
-
-    # with open(name, 'w') as f:
-    #     f.write(json_info)
