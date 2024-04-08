@@ -9,10 +9,13 @@ def distance_validation(info: ChampInfo) -> bool:
         if len(dist.distance) > len(max_dist) or int(dist.distance[0]) > int(max_dist[0]):
             max_dist = dist.distance
 
-    return distance_validate(actual=actual, max_dist=max_dist)
+    return is_valid_distance(actual=actual, max_dist=max_dist)
 
 
-def distance_validate(actual: str, max_dist: str) -> bool:
+def is_valid_distance(actual: str, max_dist: str) -> bool:
+    if actual not in ['50m', '100m', '200m', '400m']:
+        return False
+    
     actual = actual[:len(actual)-1]
     max_dist = max_dist[:len(max_dist)-1]
 
