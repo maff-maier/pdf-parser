@@ -28,27 +28,20 @@ uvicorn main:app --reload
 ### Schema
 ```json
 {
-    "sex": "F",
-    "champ_type": "Final",
-    "distance": "50m",
-    "participants": [
+    "distance": "100m",
+    "swimmers": [
         {
-            "range_name": "Девушки (13-14)",
-            "persons": [
+            "initials": "ФАМИЛИЯ Имя",
+            "distances": [
                 {
-                    "initials": "ФАМИЛИЯ Имя",
-                    "distances": [
-                        {
-                            "distance": "25m",
-                            "sum_time": "12.61",
-                            "time": "12.61"
-                        },
-                        {
-                            "distance": "50m",
-                            "sum_time": "26.44",
-                            "time": "13.83"
-                        }
-                    ]
+                    "distance": "50m",
+                    "time": "12.61",
+                    "total": "12.61"
+                },
+                {
+                    "distance": "100m",
+                    "time": "13.83",
+                    "total": "26.44",
                 }
             ]
         }
