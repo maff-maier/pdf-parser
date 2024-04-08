@@ -2,12 +2,13 @@ import pdfplumber
 import regex
 import json
 
+from io import BytesIO
 from fastapi import HTTPException
 from typing import List
 from classes import *
 
 
-def parse(file: str) -> str:
+def parse(file: BytesIO) -> str:
     full_info = ChampInfo()
 
     filtered_list = parse_pdf(file=file, full_info=full_info)
